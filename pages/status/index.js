@@ -17,13 +17,9 @@ export default function StatusPage() {
 }
 
 function UpdatedAt() {
-  const { isLoading, data } = useSWR(
-    "http://localhost:3000/api/v1/status",
-    fetchAPI,
-    {
-      refreshInterval: 2000,
-    },
-  );
+  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
+    refreshInterval: 2000,
+  });
 
   let updatedAtText = "Loading...";
 
