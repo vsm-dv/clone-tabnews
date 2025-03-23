@@ -1,51 +1,40 @@
 import database from "infra/database";
-import { ValidationError } from "infra/errors";
+import { NotFoundError, ValidationError } from "infra/errors";
 
 async function create(userInputValues) {
-  await validateUniqueEmail(userInputValues.email);
-  await validateUniqueUsername(userInputValues.username);
+  await validateUniqueEmailAndUsername(
+    userInputValues.email,
+    userInputValues.username,
+  );
 
   const newUser = await runInsertQuery({ ...userInputValues });
   return newUser;
 
-  async function validateUniqueEmail(email) {
-    const { rowCount } = await database.query({
+  async function validateUniqueEmailAndUsername(email, username) {
+    const { rows, rowCount } = await database.query({
       text: `
             SELECT 
-              email
+              email, username
             FROM
               users 
             WHERE
               LOWER(email) = LOWER($1)
+            OR
+              LOWER(username) = LOWER($2)
             ;`,
-      values: [email],
+      values: [email, username],
     });
 
     if (rowCount) {
-      throw new ValidationError({
-        message: "O email informado já está sendo utilizado.",
-        action: "Utilize outro email para realizar o cadastro",
-      });
-    }
-  }
+      const duplicatedInfo = rows.find(
+        (item) => item.email === email.toLowerCase(),
+      )
+        ? "email"
+        : "nome de usuário";
 
-  async function validateUniqueUsername(username) {
-    const { rowCount } = await database.query({
-      text: `
-            SELECT 
-              username
-            FROM
-              users 
-            WHERE
-              LOWER(username) = LOWER($1)
-            ;`,
-      values: [username],
-    });
-
-    if (rowCount) {
       throw new ValidationError({
-        message: "O nome de usuário informado já está sendo utilizado.",
-        action: "Utilize outro nome de usuário para realizar o cadastro",
+        message: `O ${duplicatedInfo} informado já está sendo utilizado.`,
+        action: `Utilize outro ${duplicatedInfo} para realizar o cadastro`,
       });
     }
   }
@@ -68,6 +57,37 @@ async function create(userInputValues) {
   }
 }
 
-const user = { create };
+export async function findOneByUsername(username) {
+  const userFound = await runSelectQuery(username);
+
+  return userFound;
+
+  async function runSelectQuery(username) {
+    const { rows, rowCount } = await database.query({
+      text: `
+            SELECT 
+              *
+            FROM
+              users 
+            WHERE
+              LOWER(username) = LOWER($1)
+            LIMIT
+              1
+            ;`,
+      values: [username],
+    });
+
+    if (!rowCount) {
+      throw new NotFoundError({
+        message: "The informed username was not found.",
+        action: "Check if the username is correct.",
+      });
+    }
+
+    return rows[0];
+  }
+}
+
+const user = { create, findOneByUsername };
 
 export default user;
