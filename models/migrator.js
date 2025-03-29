@@ -9,7 +9,7 @@ const defaultMigrationOptions = {
   dir: resolve("infra", "migrations"),
   direction: "up",
   migrationsTable: "pgmigrations",
-  verbose: true,
+  log: () => {},
 };
 
 async function listPendingMigrations() {
@@ -28,7 +28,7 @@ async function listPendingMigrations() {
     const serviceErrorObject = new ServiceError({
       cause: error,
       message:
-        "An error occurred when trying to get the migrations or trying to run the migrations",
+        "An error occurred when trying to connect to the database or trying to get the migrations",
     });
 
     console.error(error);
@@ -39,7 +39,7 @@ async function listPendingMigrations() {
   }
 }
 
-async function postHandler() {
+async function runPendingMigrations() {
   let dbClient;
 
   try {
@@ -69,7 +69,7 @@ async function postHandler() {
 
 const migrator = {
   listPendingMigrations,
-  postHandler,
+  runPendingMigrations,
 };
 
 export default migrator;
