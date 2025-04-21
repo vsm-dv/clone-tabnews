@@ -1,4 +1,5 @@
 import database from "infra/database";
+import password from "models/password";
 import { NotFoundError, ValidationError } from "infra/errors";
 
 async function create(userInputValues) {
@@ -6,6 +7,8 @@ async function create(userInputValues) {
     userInputValues.email,
     userInputValues.username,
   );
+
+  await hashPasswordInObject(userInputValues);
 
   const newUser = await runInsertQuery({ ...userInputValues });
   return newUser;
@@ -37,6 +40,11 @@ async function create(userInputValues) {
         action: `Utilize outro ${duplicatedInfo} para realizar o cadastro`,
       });
     }
+  }
+
+  async function hashPasswordInObject(userInputValues) {
+    const hashedPassword = await password.hash(userInputValues.password);
+    userInputValues.password = hashedPassword;
   }
 
   async function runInsertQuery(userInputValues) {
