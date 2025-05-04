@@ -10,7 +10,7 @@ function getNumberOfRounds() {
   return process.env.NODE_ENV === "production" ? 14 : 1;
 }
 
-export async function compare(providedPassowrd, storedPassword) {
+async function compare(providedPassowrd, storedPassword) {
   return await bcryptjs.compare(providedPassowrd, storedPassword);
 }
 
