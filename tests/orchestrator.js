@@ -4,6 +4,7 @@ import retry from "async-retry";
 import database from "infra/database";
 import migrator from "models/migrator";
 import user from "models/user";
+import session from "models/session";
 
 async function clearDatabase() {
   await database.query({
@@ -41,11 +42,16 @@ async function createUser(userObject = {}) {
   });
 }
 
+async function createSession(userId) {
+  return await session.create(userId);
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
   runPendingMigrations,
   createUser,
+  createSession,
 };
 
 export default orchestrator;

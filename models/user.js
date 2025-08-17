@@ -64,6 +64,37 @@ async function create(userInputValues) {
   }
 }
 
+export async function findOneById(id) {
+  const userFound = await runSelectQuery(id);
+
+  return userFound;
+
+  async function runSelectQuery(id) {
+    const { rows, rowCount } = await database.query({
+      text: `
+            SELECT 
+              *
+            FROM
+              users 
+            WHERE
+              id = $1
+            LIMIT
+              1
+            ;`,
+      values: [id],
+    });
+
+    if (!rowCount) {
+      throw new NotFoundError({
+        message: "The informed id was not found.",
+        action: "Check if the id is correct.",
+      });
+    }
+
+    return rows[0];
+  }
+}
+
 async function findOneByUsername(username) {
   const userFound = await runSelectQuery(username);
 
@@ -172,6 +203,6 @@ async function update(username, userInputValues) {
   return updatedUser;
 }
 
-const user = { create, findOneByUsername, update, findOneByEmail };
+const user = { create, findOneById, findOneByUsername, update, findOneByEmail };
 
 export default user;
