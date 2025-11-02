@@ -111,3 +111,21 @@ export class UnauthorizedError extends Error {
     };
   }
 }
+export class ForbiddenError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Access denied.", { cause });
+
+    this.name = "ForbiddenError";
+    this.action = action || "Check the necessary features before you proceed.";
+    this.statusCode = 403;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      action: this.action,
+      status_code: this.statusCode,
+    };
+  }
+}
