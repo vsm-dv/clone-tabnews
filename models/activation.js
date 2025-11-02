@@ -1,28 +1,41 @@
 import database from "infra/database";
 import email from "infra/email";
+import { NotFoundError } from "infra/errors";
 import webserver from "infra/webserver";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
 
-async function findOneByUserId(userId) {
-  const newToken = await runSelectQuery(userId);
+async function findOneValidById(tokenId) {
+  const newToken = await runSelectQuery(tokenId);
   return newToken;
 
-  async function runSelectQuery(userId) {
-    const { rows } = await database.query({
+  async function runSelectQuery(tokenId) {
+    const { rows, rowCount } = await database.query({
       text: `
         SELECT
           *
         FROM
           user_activation_tokens
         WHERE
-          user_id = $1
+          id = $1
+        AND expires_at > NOW()
+        AND used_at IS NULL
+        ORDER BY
+          created_at DESC
         LIMIT
           1
         ;
       `,
-      values: [userId],
+      values: [tokenId],
     });
+
+    if (!rowCount) {
+      throw new NotFoundError({
+        message: "The activation token was not found or is not valid.",
+        action:
+          "Try to create your account again to receive a new activation email.",
+      });
+    }
 
     return rows[0];
   }
@@ -69,7 +82,7 @@ Team
 const activation = {
   sendEmailToUser,
   create,
-  findOneByUserId,
+  findOneValidById,
 };
 
 export default activation;
