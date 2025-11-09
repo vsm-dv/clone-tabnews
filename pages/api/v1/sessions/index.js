@@ -1,5 +1,7 @@
 import controller from "infra/controller";
+import { ForbiddenError } from "infra/errors";
 import authentication from "models/authentication";
+import authorization from "models/authorization";
 import session from "models/session";
 import { createRouter } from "next-connect";
 
@@ -18,6 +20,13 @@ async function postHandler(request, response) {
     userInputValues.email,
     userInputValues.password,
   );
+
+  if (!authorization.can(authenticatedUser, "create:session")) {
+    throw new ForbiddenError({
+      message: "You do not have permission to login.",
+      action: "Contact the support if you believe this is an error.",
+    });
+  }
 
   const newSession = await session.create(authenticatedUser.id);
   controller.setSessionCookie(newSession.token, response);

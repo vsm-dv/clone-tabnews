@@ -3,8 +3,8 @@ import retry from "async-retry";
 
 import database from "infra/database";
 import migrator from "models/migrator";
-import user from "models/user";
 import session from "models/session";
+import user from "models/user";
 
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
@@ -49,13 +49,21 @@ async function runPendingMigrations() {
   await migrator.runPendingMigrations();
 }
 
-async function createUser(userObject = {}) {
-  return await user.create({
+async function createUser(userObject = {}, featuresToInclude = []) {
+  let createdUser = await user.create({
     username:
       userObject.username || faker.internet.username().replace(/[_.-]/g, ""),
     email: userObject.email || faker.internet.email(),
     password: userObject.password || "validPassword",
   });
+
+  const userId = createdUser.id;
+
+  if (featuresToInclude.length) {
+    createdUser = await user.setFeatures(userId, featuresToInclude);
+  }
+
+  return createdUser;
 }
 
 async function createSession(userId) {

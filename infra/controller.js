@@ -1,14 +1,15 @@
 import * as cookie from "cookie";
+import authorization from "models/authorization";
 import session from "models/session";
+import user from "models/user";
 import {
+  ForbiddenError,
   InternalServerError,
   MethodNotAllowedError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-  ForbiddenError,
 } from "./errors";
-import user from "models/user";
 
 function onNoMatchHandler(request, response) {
   const publicErrorObject = new MethodNotAllowedError();
@@ -26,7 +27,6 @@ function onErrorHandler(error, request, response) {
   if (
     error instanceof ValidationError ||
     error instanceof NotFoundError ||
-    error instanceof UnauthorizedError ||
     error instanceof ForbiddenError
   ) {
     return response.status(error.statusCode).json(error);
@@ -99,13 +99,13 @@ function canRequest(feature) {
   return function canRequestMiddleware(request, response, next) {
     const userTryingToRequest = request.context.user;
 
-    if (userTryingToRequest.features.includes(feature)) {
+    if (authorization.can(userTryingToRequest, feature)) {
       return next();
     }
 
     throw new ForbiddenError({
       message: "You do not have permission to perform this action.",
-      action: `Check if you user has the "${feature}" feature.`,
+      action: `Check if your user has the "${feature}" feature.`,
     });
   };
 }
