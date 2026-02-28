@@ -1,4 +1,5 @@
 import * as cookie from "cookie";
+import activation from "models/activation";
 import authorization from "models/authorization";
 import session from "models/session";
 import user from "models/user";
@@ -110,6 +111,33 @@ function canRequest(feature) {
   };
 }
 
+async function canRequestActivation(request, response, next) {
+  const token = request.query.token_id;
+  const usedTokenAndFeatures = await activation.getUsedTokenAndFeatures(token);
+  const userTryingToRequest = usedTokenAndFeatures
+    ? await user.findOneById(usedTokenAndFeatures.user_id)
+    : request.context.user;
+
+  if (authorization.can(userTryingToRequest, "read:activation_token")) {
+    return next();
+  }
+
+  if (
+    (usedTokenAndFeatures && userTryingToRequest.features.length) ||
+    request.cookies?.session_id
+  ) {
+    throw new ForbiddenError({
+      message: "Your account is already activated.",
+      action: "You are allowed to access your account.",
+    });
+  }
+
+  throw new ForbiddenError({
+    message: "You no longer have access to the system.",
+    action: "If you think this is a mistake, contact the support team.",
+  });
+}
+
 const controller = {
   errorHandlers: {
     onNoMatch: onNoMatchHandler,
@@ -119,6 +147,7 @@ const controller = {
   clearSessionCookie,
   injectAnonymousOrUser,
   canRequest,
+  canRequestActivation,
 };
 
 export default controller;

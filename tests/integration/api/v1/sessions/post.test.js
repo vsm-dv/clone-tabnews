@@ -91,7 +91,8 @@ describe("POST /api/v1/sessions", () => {
           email: "all.correct@email.com",
           password: "allCorrect",
         },
-        ["create:session"],
+        true,
+        // ["create:session"],
       );
 
       const response = await fetch("http://localhost:3000/api/v1/sessions", {

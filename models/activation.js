@@ -77,8 +77,43 @@ async function markTokenAsUsed(tokenId) {
   }
 }
 
+async function getUsedTokenAndFeatures(tokenId) {
+  const existingToken = await runSelectQuery(tokenId);
+  return existingToken;
+
+  async function runSelectQuery(tokenId) {
+    const { rows } = await database.query({
+      text: `
+        SELECT
+          user_activation_tokens.*, features
+        FROM
+          user_activation_tokens
+        INNER JOIN 
+          users 
+        ON 
+          users.id = user_activation_tokens.user_id
+        WHERE
+          user_activation_tokens.id = $1
+        AND used_at IS NOT NULL
+        ORDER BY
+          created_at DESC
+        LIMIT
+          1
+        ;
+      `,
+      values: [tokenId],
+    });
+
+    return rows[0];
+  }
+}
+
 async function activateUserByUserId(userId) {
-  const activatedUser = await user.setFeatures(userId, ["create:session"]);
+  const activatedUser = await user.setFeatures(userId, [
+    "create:session",
+    "read:session",
+    "update:user",
+  ]);
   return activatedUser;
 }
 
@@ -126,6 +161,7 @@ const activation = {
   findOneValidById,
   markTokenAsUsed,
   activateUserByUserId,
+  getUsedTokenAndFeatures,
 };
 
 export default activation;

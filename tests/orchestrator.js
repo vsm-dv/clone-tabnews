@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker/.";
 import retry from "async-retry";
 
 import database from "infra/database";
+import activation from "models/activation";
 import migrator from "models/migrator";
 import session from "models/session";
 import user from "models/user";
@@ -49,7 +50,7 @@ async function runPendingMigrations() {
   await migrator.runPendingMigrations();
 }
 
-async function createUser(userObject = {}, featuresToInclude = []) {
+async function createUser(userObject = {}, shouldActivate = false) {
   let createdUser = await user.create({
     username:
       userObject.username || faker.internet.username().replace(/[_.-]/g, ""),
@@ -59,11 +60,19 @@ async function createUser(userObject = {}, featuresToInclude = []) {
 
   const userId = createdUser.id;
 
-  if (featuresToInclude.length) {
-    createdUser = await user.setFeatures(userId, featuresToInclude);
+  if (shouldActivate) {
+    createdUser = await activation.activateUserByUserId(userId);
   }
 
   return createdUser;
+}
+
+async function updateUserFeatures(userId, features) {
+  await user.setFeatures(userId, features);
+}
+
+async function addFeaturesToUser(userId, features) {
+  await user.addFeatures(userId, features);
 }
 
 async function createSession(userId) {
@@ -97,6 +106,11 @@ function getUUIDFromText(text) {
   return text.match(uuidRegex)[0];
 }
 
+async function createActivationToken(userId) {
+  const activationToken = await activation.create(userId);
+  return activationToken;
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
@@ -106,6 +120,9 @@ const orchestrator = {
   deleteAllEmails,
   getLastEmail,
   getUUIDFromText,
+  createActivationToken,
+  updateUserFeatures,
+  addFeaturesToUser,
 };
 
 export default orchestrator;
