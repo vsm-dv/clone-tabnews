@@ -12,9 +12,12 @@ beforeAll(async () => {
 describe("GET /api/v1/user", () => {
   describe("Default user", () => {
     test("With valid session", async () => {
-      const createdUser = await orchestrator.createUser({
-        username: "userWithValidSession",
-      });
+      const createdUser = await orchestrator.createUser(
+        {
+          username: "userWithValidSession",
+        },
+        true,
+      );
 
       const sessionObject = await orchestrator.createSession(createdUser.id);
 
@@ -36,7 +39,7 @@ describe("GET /api/v1/user", () => {
         id: createdUser.id,
         username: "userWithValidSession",
         email: createdUser.email,
-        password: createdUser.password,
+        features: ["create:session", "read:session", "update:user"],
         created_at: createdUser.created_at.toISOString(),
         updated_at: createdUser.updated_at.toISOString(),
       });
