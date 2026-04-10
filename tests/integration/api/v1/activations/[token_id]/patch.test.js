@@ -1,5 +1,6 @@
 import user from "models/user";
 import orchestrator from "tests/orchestrator";
+import webserver from "infra/webserver";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -15,7 +16,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     );
 
     const activationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
@@ -42,7 +43,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     );
 
     const firstActivationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
@@ -51,7 +52,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     expect(firstActivationResponse.status).toBe(200);
 
     const secondActivationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
@@ -80,7 +81,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     );
 
     const activationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
         headers: {
@@ -107,7 +108,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     );
 
     const firstActivationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
@@ -118,7 +119,7 @@ describe("PATCH /api/v1/activations/[token_id]", () => {
     await orchestrator.updateUserFeatures(newUser.id, []);
 
     const secondActivationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
